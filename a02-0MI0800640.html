@@ -1,0 +1,97 @@
+<html>
+    <title>Problem 02 Lightsaber</title>
+
+    <style>
+			body { margin: 0; overflow: hidden; }
+			canvas { width: 100%; height: 100%; }
+	</style>
+
+    <script type="importmap">
+			{ "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+                 "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+				  
+			} }
+		</script>
+
+    <body>
+        <script type = "module">
+
+            import * as THREE from 'three';
+            import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+			 
+			
+            var renderer = new THREE.WebGLRenderer()
+			renderer.setSize( window.innerWidth, window.innerHeight )
+			renderer.setAnimationLoop( drawFrame )
+			document.body.appendChild( renderer.domElement )
+
+			var scene = new THREE.Scene()
+		
+			var aspect = window.innerWidth/window.innerHeight
+			var camera = new THREE.PerspectiveCamera( 45, aspect )
+			camera.lookAt( scene.position )
+
+            const controls = new OrbitControls( camera, renderer.domElement )
+
+            camera.position.set( 0, 5, -7 )
+            controls.update()
+           
+            const lightsaberGroup = new THREE.Group
+
+            const handleGeometry = new THREE.CylinderGeometry( 0.4, 0.4, 4, 20 ) 
+            const handleMaterial= new THREE.MeshLambertMaterial( {color: 0x3f3736} ) 
+            const handle = new THREE.Mesh( handleGeometry, handleMaterial ) 
+            lightsaberGroup.add(handle)
+
+            const handleEndGeometry = new THREE.TorusGeometry(0.5,0.25,16,5)
+            const handleEndMaterial = new THREE.MeshLambertMaterial({color: 0x1c1818})
+            const handleEnd1 = new THREE.Mesh(handleEndGeometry,handleEndMaterial)
+            const handleEnd2 = new THREE.Mesh(handleEndGeometry, handleEndMaterial)
+            handleEnd1.position.set(0,-2,0)
+            handleEnd1.rotation.set(Math.PI/2,0,0)
+            handleEnd2.position.set(0,2,0)
+            handleEnd2.rotation.set(Math.PI/2,0,0)
+            lightsaberGroup.add(handleEnd1)
+            lightsaberGroup.add(handleEnd2)
+            
+            const saberGeometry = new THREE.CylinderGeometry(0.35, 0.35,8,5)
+            const saberMaterial = new THREE.LineBasicMaterial({color:0xe70909})
+            const saber1 = new THREE.Mesh(saberGeometry,saberMaterial)
+            const saber2 = new THREE.Mesh(saberGeometry, saberMaterial)
+            saber1.position.set(0,5.5,0)
+            saber2.position.set(0,-5.5,0)            
+            lightsaberGroup.add(saber1)
+            lightsaberGroup.add(saber2)
+
+            const tipGeometry = new THREE.ConeGeometry(0.35, 0.5,5)
+            const tipMaterial = new THREE.LineBasicMaterial({color:0xe70909})
+            const tip1 = new THREE.Mesh(tipGeometry,tipMaterial)
+            const tip2 = new THREE.Mesh(tipGeometry, tipMaterial)
+            tip1.position.set(0,9.75,0)
+            tip2.position.set(0,-9.75,0)   
+            tip2.rotation.set(Math.PI,Math.PI/5,0)   
+            lightsaberGroup.add(tip1)
+            lightsaberGroup.add(tip2)
+
+            const ringGeometry = new THREE.RingGeometry( 1.9, 2.2, 64, 15 ); 
+            const ringMaterial = new THREE.MeshBasicMaterial( { color: 0x4c2424, side: THREE.DoubleSide } );
+            const ring = new THREE.Mesh( ringGeometry, ringMaterial); 
+            lightsaberGroup.add( ring );
+
+            
+            lightsaberGroup.rotation.set(Math.PI/6,0,0)
+            scene.add(lightsaberGroup)
+
+            const light = new THREE.AmbientLight( 0x404040, 50 ); // soft white light
+            scene.add( light );
+            
+            function drawFrame()
+			{
+                controls.update()
+				renderer.render( scene, camera )
+			}
+
+        </script>
+    </body>
+</html>

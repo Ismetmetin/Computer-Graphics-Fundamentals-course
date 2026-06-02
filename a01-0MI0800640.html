@@ -1,0 +1,279 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; overflow: hidden; }
+			canvas { width: 100%; height: 100%; }
+		</style>
+		<script type="importmap">
+			{ "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+                 "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+			} }
+		</script>
+	</head>
+	<body>
+       <div> можеш да се движеш с мишката :))   </div> 
+		<script type="module">
+		
+	        import * as THREE from 'three';
+            import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setAnimationLoop( drawFrame );
+			document.body.appendChild( renderer.domElement );
+
+			var scene = new THREE.Scene();
+			
+			var aspect = window.innerWidth/window.innerHeight;
+			var camera = new THREE.PerspectiveCamera( 45, aspect );
+			camera.lookAt( scene.position );
+
+            const controls = new OrbitControls( camera, renderer.domElement );
+
+            camera.position.set( 0, 10, -20 );
+            controls.update();
+
+
+            //bachkam tuk
+
+            const material1 = new THREE.LineBasicMaterial( { color: 0xff0000 } );
+            const material2 = new THREE.LineBasicMaterial( { color: 0x00ff00 } );
+            const material3 = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+
+            const pointsX = [];
+            pointsX.push( new THREE.Vector3( 0, 0, 0 ) );
+            pointsX.push( new THREE.Vector3( 25, 0, 0 ) );
+            
+            const pointsY = [];
+            pointsY.push( new THREE.Vector3( 0, 0, 0 ) );
+            pointsY.push( new THREE.Vector3( 0, 25, 0 ) );
+
+            const pointsZ = [];
+            pointsZ.push( new THREE.Vector3( 0, 0, 0 ) );
+            pointsZ.push( new THREE.Vector3( 0, 0, 25 ) );
+
+            const geometryX = new THREE.BufferGeometry().setFromPoints( pointsX );
+            const geometryY = new THREE.BufferGeometry().setFromPoints( pointsY );
+            const geometryZ = new THREE.BufferGeometry().setFromPoints( pointsZ );
+
+            const lineXred = new THREE.Line( geometryX, material1 );
+            scene.add(lineXred)
+
+            const lineYgreen= new THREE.Line( geometryY, material2 );
+            scene.add(lineYgreen)
+            
+            const lineZblue = new THREE.Line( geometryZ, material3 );
+            scene.add(lineZblue)
+			
+
+            //q da vidim sedalki
+			
+			
+
+            const seatLength = 0.7;
+            const seatWidth = 0.7;
+            const seatHeight = 0.35; 
+            
+            const seatGeometry = new THREE.BoxGeometry(seatWidth, seatHeight, seatLength);
+            const seatMaterial = new THREE.MeshPhongMaterial({color:0xdc4400})
+
+            const headRestLength = seatLength*0.4;
+            const headRestWidth = seatWidth;
+            const headRestHeight = seatHeight*2;
+            const headRestGeometry = new THREE.BoxGeometry(headRestWidth,headRestHeight,headRestLength)
+            const headRestMaterial = new THREE.MeshPhongMaterial({color: 0xdc4400})
+            const headRestOffsetY = 0.2
+            const headRestOffsetZ = 0.2;
+
+            const armRestLength = seatLength;
+            const armRestWidth = seatWidth*0.15;
+            const armRestHeight = (headRestHeight+seatHeight)/2;
+            const armRestGeometry = new THREE.BoxGeometry(armRestWidth,armRestHeight,armRestLength)
+            const armRestMaterial = new THREE.MeshPhongMaterial({color:"black"})
+            const armRestOffsetX = seatWidth/2; 
+            
+            const floorLength = 17
+            const floorWidth = 13
+            const floorHeight = 0.2
+            const floorGeometry = new THREE.BoxGeometry(floorWidth,floorHeight,floorLength)
+            const floorMaterial = new THREE.MeshPhongMaterial({color:0xe9d6a3})
+
+            const stepLength = seatLength + 1.25;
+            const stepWidth = floorWidth
+            const stepMaterial = new THREE.MeshPhongMaterial({color:0xe9d6a3})
+            
+            let zSeatCenterCoord = -6.1
+            let visochinaY = 0.4 * 10///10 reda sedalki 
+
+            const wallLength = 1
+            const wallWidth = floorWidth
+            const wallHeight = visochinaY + 4
+            const wallGeometry = new THREE.BoxGeometry(wallWidth,wallHeight, wallLength)
+            const wallMaterial = new THREE.MeshPhongMaterial({color: 0x58410f}); // 866316
+            
+            const frontWall = new THREE.Mesh(wallGeometry, wallMaterial)
+            const backWall = new THREE.Mesh(wallGeometry,wallMaterial)
+            backWall.position.set(0,visochinaY/2 + 1,-zSeatCenterCoord)
+            frontWall.position.set(0,visochinaY/2 +1, 1.82*zSeatCenterCoord)
+            scene.add(backWall)
+            scene.add(frontWall)
+
+            const sidewallLength = floorLength
+            const sidewallWidth = wallLength
+            const sidewallHeight = wallHeight
+            const sidewallGeometry = new THREE.BoxGeometry(sidewallWidth,sidewallHeight,sidewallLength )
+            const sidewallOffsetX = floorWidth/2;
+            const sidewallOffsetY = wallHeight/2 - 1;
+            const sidewallR = new THREE.Mesh(sidewallGeometry, wallMaterial)
+            const sidewallL = new THREE.Mesh(sidewallGeometry, wallMaterial)
+            sidewallL.position.set(-sidewallOffsetX,sidewallOffsetY, zSeatCenterCoord/2 + 0.3)
+            sidewallR.position.set(sidewallOffsetX,sidewallOffsetY,zSeatCenterCoord/2 +0.3)
+            scene.add(sidewallL)
+            scene.add(sidewallR)
+            
+            //тук игнорираме че не знам как се казва голямото платно за прожектиране на филми
+            const displayLength =  0.3
+            const displayWidth = floorWidth*0.7
+            const displayHeight = wallHeight*0.66
+            const displayGeometry = new THREE.BoxGeometry(displayWidth,displayHeight,displayLength)
+            const displayMaterial = new THREE.MeshPhongMaterial({color: 0xcbba97});
+            const display = new THREE.Mesh(displayGeometry,displayMaterial)
+            const displayOffsetY = 0.45*wallHeight
+            const displayOffsetZ = zSeatCenterCoord - 0.27 * floorLength
+            display.position.set(0,displayOffsetY,displayOffsetZ  )
+            scene.add(display)
+            
+
+            const doorLength = 0.12 * floorLength
+            const doorWidth =  0.2
+            const doorHeight = wallHeight*0.4
+            const doorGeometry = new THREE.BoxGeometry(doorWidth,doorHeight,doorLength)
+            const doorMaterial = new THREE.MeshPhongMaterial({color: 'black'});
+            const door = new THREE.Mesh(doorGeometry,doorMaterial)
+            const doorOffsetX = floorWidth/2 - 0.5
+            const doorOffsetY = doorHeight/2
+            const doorOffsetZ = -floorLength*0.47
+            door.position.set(doorOffsetX, doorOffsetY, doorOffsetZ)
+            scene.add(door)
+
+           var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+           floor.position.set(0,0,zSeatCenterCoord/2)
+           scene.add(floor);
+
+
+            //тонколони?
+            const speakerLength = 0.5   
+            const speakerWidth =  0.5
+            const speakerHeight = 1
+            const speakerGeometry = new THREE.BoxGeometry(speakerWidth,speakerHeight,speakerLength)
+            const speakerMaterial = new THREE.MeshPhongMaterial({color: 'black'});
+            
+            const speakerOffsetX = floorWidth/2 - 0.4 
+            const speakerOffsetY = 6
+            const speakerOffsetZ = 4
+            var speakerRotationZ = Math.PI/6;   
+            
+            for(let j = -1; j<2; j+=2)
+            for(let i = -1; i<2 ; i++)
+            {
+                var speaker = new THREE.Mesh(speakerGeometry,speakerMaterial)
+                speaker.rotation.set(0,0,j*speakerRotationZ)
+                speaker.position.set(j*speakerOffsetX, speakerOffsetY, i*speakerOffsetZ)
+                scene.add(speaker)
+            }
+            
+            //dekor stena na PI/3 zavurtqna po x lepnata za stenata ocvetena v kafqvo
+
+            const decorWallLength = floorLength*0.75
+            const decorWallWidth =  armRestWidth
+            const decorWallHeight = wallHeight/3
+            const decorWallGeometry = new THREE.BoxGeometry(decorWallWidth,decorWallHeight,decorWallLength)
+            const decorWallMaterial = new THREE.MeshPhongMaterial({color: 0x3b302a});
+            const decorWallOffsetX = doorOffsetX 
+            const decorWallOffsetY = wallHeight/3
+            const decorWallOffsetZ =  0.3
+            const decorWallRotationX = -Math.PI*0.10;
+            const decorWallL = new THREE.Mesh(decorWallGeometry,decorWallMaterial)
+            const decorWallR = new THREE.Mesh(decorWallGeometry,decorWallMaterial)
+
+            decorWallL.position.set(decorWallOffsetX, decorWallOffsetY, decorWallOffsetZ)
+            decorWallR.position.set(-decorWallOffsetX, decorWallOffsetY, decorWallOffsetZ)
+            decorWallL.rotation.set(decorWallRotationX,0,0)
+            decorWallR.rotation.set(decorWallRotationX,0,0)
+
+            const decorHelperHeight = decorWallHeight
+            const decoreHelperLength = 1
+            const decorHelperGeometry = new THREE.BoxGeometry(decorWallWidth,decorHelperHeight,decoreHelperLength)
+            const decorHelperL = new THREE.Mesh(decorHelperGeometry, decorWallMaterial)
+            decorHelperL.position.set(decorWallOffsetX, decorWallOffsetY*0.31, zSeatCenterCoord)
+            const decorHelperR = new THREE.Mesh(decorHelperGeometry, decorWallMaterial)
+            decorHelperR.position.set(-decorWallOffsetX, decorWallOffsetY*0.31, zSeatCenterCoord)
+
+            scene.add(decorWallL)
+            scene.add(decorWallR)
+            scene.add(decorHelperL)
+            scene.add(decorHelperR)
+            //ако някой пита зашо y почва от 0.3 вместо 0 ---> биваше седалките от първия ред да не са само за малки деца :)
+			for(  let y = 0.3; y < visochinaY+0.3; y+= 0.4)
+			{
+                var stepHeight = y - armRestHeight/2
+                var stepGeometry = new THREE.BoxGeometry(stepWidth, stepHeight,stepLength)
+                var step = new THREE.Mesh(stepGeometry, stepMaterial)
+                step.position.set(0, (y - armRestHeight/2)/2, zSeatCenterCoord);
+                scene.add(step);
+
+                for( let x = -4.5; x < 10 - 4.5; x++)
+			    {
+                    var seat = new THREE.Mesh(seatGeometry, seatMaterial);
+                    seat.position.set(x, y, zSeatCenterCoord)
+            
+                    var headRest = new THREE.Mesh(headRestGeometry, headRestMaterial)
+                    headRest.position.set(x,y + headRestOffsetY,zSeatCenterCoord + headRestOffsetZ)
+            
+                    var armRestL = new THREE.Mesh(armRestGeometry, armRestMaterial)
+                    armRestL.position.set(x - armRestOffsetX, y, zSeatCenterCoord)
+
+                    var armRestR = new THREE.Mesh(armRestGeometry, armRestMaterial)
+                    armRestR.position.set(x + armRestOffsetX, y, zSeatCenterCoord)
+
+
+                    scene.add(seat)
+                    scene.add(headRest)
+                    scene.add(armRestL);
+                    scene.add(armRestR)
+                }
+			    zSeatCenterCoord+= 1.25
+
+			}
+			
+            
+            // две светлини - отпред и отзад на сцената
+			var light = new THREE.PointLight( 'white' , 45 );
+			light.position.set( 0,5,0 );
+			scene.add( light );
+			
+			light = new THREE.PointLight( 0x866316 , 45 );
+			light.position.set( 0, 3.5, -10);
+			scene.add( light );
+
+
+            light = new THREE.PointLight( 0x866316 , 45 );
+			light.position.set( 0, -3.5, 0);
+			scene.add( light );
+            
+            light = new THREE.PointLight( 0x866316 , 45 );
+			light.position.set( 0, -3.5, -13);
+			scene.add( light );
+            
+			function drawFrame()
+			{
+                controls.update();
+				// scene.rotation.x = t/2300;
+				// scene.rotation.y = t/2000;
+				renderer.render( scene, camera );
+			}
+			
+		</script>
+	</body>
+</html>

@@ -1,0 +1,264 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; overflow: hidden; }
+			canvas { width: 100%; height: 100%; }
+		</style>
+		<script type="importmap">
+			{ "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+				"csg/": "https://cdn.jsdelivr.net/gh/looeee/threejs-csg@main/src/CSG/",
+				"three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+			} }
+		</script>
+	</head>
+	<body>
+		<script type="module">
+		
+			import * as THREE from "three";
+			import {CSG} from "csg/CSG.js"; // Включване на библиотека за CSG
+			import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+			// Задача: конструирайте цилиндрична тръба като
+			// стената ѝ има дебелина
+
+			
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setAnimationLoop( drawFrame );
+			document.body.appendChild( renderer.domElement );
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xebb0ff );
+			
+			var aspect = window.innerWidth/window.innerHeight;
+			var camera = new THREE.PerspectiveCamera( 30, aspect );
+			camera.position.set( 0, 5, -16 );
+
+			const controls = new OrbitControls( camera, renderer.domElement )
+			controls.update()
+			
+
+			createMuseum()
+			let revolver = createRevolver()
+			revolver.scale.set(0.5,0.5,0.5)
+			revolver.position.set(0,-4,7)
+			scene.add(revolver)
+			
+
+			
+
+			var light = new THREE.PointLight( 'white', 150 );
+			light.position.set( 0, -1, 5 );
+			scene.add( light );
+			
+			
+			function drawFrame( t )
+			{
+				// въртим тръбата
+				
+				controls.update();
+				renderer.render( scene, camera );
+			}
+			
+			function createMuseum()
+			{
+				const x = 4
+				const z = 0
+				const yOffset = -1
+				const towerBodyHeight = 3
+				const lowerBodyHeight= towerBodyHeight*1.5
+				const towerBodyRadius = 1
+				const wallMaterial = new THREE.MeshPhongMaterial({color:0x202020})
+				const roofMaterial = new THREE.MeshPhongMaterial({color: 0x2b1b17})
+				scene.add(createTower(-x,0))
+				scene.add(createTower(x,0))
+
+				const wallLength  = 10
+				const wallWidth = towerBodyRadius
+				const wallHeight = (lowerBodyHeight + towerBodyHeight)*0.8
+				const wallZGeometry = new THREE.BoxGeometry(wallWidth,wallHeight,wallLength)
+				var leftWall = new THREE.Mesh(wallZGeometry,wallMaterial)
+				var rightWall = new THREE.Mesh(wallZGeometry, wallMaterial)
+				rightWall.position.set(-4,yOffset - towerBodyHeight,5)
+				leftWall.position.set(4,yOffset - towerBodyHeight,5)
+				
+				//prozorci
+				var prozorecGeometry = new THREE.BoxGeometry(wallWidth*1.1,1.6,1)
+				const prozorecMaterial = new THREE.MeshPhysicalMaterial({
+ 				color: 0x99ccff,
+ 				transparent: true
+				});		
+						
+				
+				
+				var csg2 = new CSG()
+				csg2.union([leftWall,rightWall])
+				for(let i = -1; i<2; i+=2)
+				{
+					for(let z = 2; z < 10; z+=2)
+					{	
+						var prozorec = new THREE.Mesh(prozorecGeometry, prozorecMaterial)
+						prozorec.position.set(i*x, -wallHeight/2,z)
+						csg2.subtract([prozorec])
+						scene.add(prozorec)
+						const light = new THREE.PointLight( 0xffffff, 100, 100 );
+						light.position.set( i*x,-wallHeight/2, z );
+						scene.add( light );
+					}
+				}
+				
+				const SVETLINA1 = new THREE.PointLight( 0xffffff, 100, 100 );
+				SVETLINA1.position.set(x*2, 0, wallLength );
+				scene.add(SVETLINA1);
+				
+				const SVETLINA2 = new THREE.PointLight( 0xffffff, 100, 100 );
+				SVETLINA2.position.set(-x*2, 0, wallLength );
+				scene.add(SVETLINA2);
+
+				const SVETLINA3 = new THREE.PointLight( 0xffffff, 100, 100 );
+				SVETLINA3.position.set(0, 0, 2*wallLength );
+				scene.add(SVETLINA3);
+				
+				var neshtosi = csg2.toMesh()
+				scene.add(neshtosi)
+				const wallXGeometry = new THREE.BoxGeometry(2.2	*x,wallHeight,wallWidth)
+				var backWall = new THREE.Mesh(wallXGeometry,wallMaterial)
+				backWall.position.set(0,yOffset - towerBodyHeight,wallLength)
+				
+				var csg2 = new CSG()
+
+				scene.add(backWall)
+				
+
+				const slantRoofZgGeometry = new THREE.CylinderGeometry(2*wallWidth,wallWidth*2,wallLength*1.05,3)
+				var slantRoof1 = new THREE.Mesh(slantRoofZgGeometry,roofMaterial)
+				var slantRoof2 = new THREE.Mesh(slantRoofZgGeometry,roofMaterial)
+				var slantRoofBack = new THREE.Mesh(slantRoofZgGeometry,roofMaterial)
+				
+				slantRoof1.position.set(x,yOffset,wallLength*0.5)
+				slantRoof2.position.set(-x,yOffset,wallLength*0.5)
+				slantRoofBack.position.set(0,yOffset,wallLength)
+				slantRoof1.rotation.set(3*Math.PI/2,0,0)
+				slantRoof2.rotation.set(3*Math.PI/2,0,0)
+				slantRoofBack.rotation.set(Math.PI/6,0,Math.PI/2)
+				
+				let grassGeometry = new THREE.BoxGeometry(2*x,1,wallLength)
+				let grassMaterial = new THREE.LineBasicMaterial({color:0x3c722e})
+				let grass =  new THREE.Mesh(grassGeometry,grassMaterial)
+				grass.position.set(0,-wallHeight - 0.5,wallLength/2)
+				scene.add(grass)
+				scene.add(slantRoof1)
+				scene.add(slantRoof2)
+				scene.add(slantRoofBack)
+
+				const light = new THREE.PointLight( 0xffffff, 1, 100 );
+				light.position.set( 0, 0, 0 );
+				scene.add( light );
+
+				//vhod
+				const entryGeometry = new THREE.RingGeometry( 4,2.8, 4,1, 0,Math.PI )
+				const entryMaterial = new THREE.MeshBasicMaterial( { color: 0x252525, side: THREE.DoubleSide } )
+				const entry = new THREE.Mesh( entryGeometry, entryMaterial )
+				entry.position.set(0,-3, -1)
+				scene.add( entry )
+
+				function createTower(xCoord,zCoord)
+				{
+				
+				var towerGroup = new THREE.Group()
+				const towerMaterial = new THREE.LineBasicMaterial({color:0x252525})
+				const towerBodyRadius = 1
+				var towerBodyGeometry = new THREE.CylinderGeometry(towerBodyRadius, towerBodyRadius, towerBodyHeight,6,12)
+				var towerBody = new THREE.Mesh(towerBodyGeometry,towerMaterial)
+				towerBody.position.set(xCoord,yOffset,zCoord)
+
+
+				const roofHeight = towerBodyHeight*1.6
+				const roofRadius = towerBodyRadius*1.3
+				
+				const roofGeometry = new THREE.ConeGeometry(roofRadius,roofHeight,6)
+				var roof = new THREE.Mesh(roofGeometry,roofMaterial)
+				roof.position.set(xCoord,yOffset + towerBodyHeight/2 + roofHeight/2,zCoord)
+
+				
+				const lowerBodyRadius = towerBodyRadius*1.2
+				var lowerBodyGeometry = new THREE.CylinderGeometry(lowerBodyRadius, lowerBodyRadius, lowerBodyHeight,6,12)
+				var lowerBody = new THREE.Mesh(lowerBodyGeometry,towerMaterial)
+				lowerBody.position.set(xCoord,yOffset-towerBodyHeight*1.2,zCoord)
+
+				towerGroup.add(towerBody)
+				towerGroup.add(roof)
+				towerGroup.add(lowerBody)
+
+				//towerGroup.rotation.set(0,Math.PI/6,0)	
+				return towerGroup
+				}
+			}
+			//bachka
+			
+
+
+			function createRevolver()
+			{
+				const cylRadius = 1
+				const cylHeight = 2*cylRadius 
+				var cylGeometry = new THREE.CylinderGeometry(cylRadius,cylRadius,cylHeight)
+				var revCylinderMaterial =   new THREE.MeshPhongMaterial({color:0x4e4c4b})
+				var revCylinder = new THREE.Mesh(cylGeometry,revCylinderMaterial)
+				
+				var csg = new CSG()
+				const radiusOfRemovedCylinder = 0.18*cylRadius
+				var removeCylGeometry = new THREE.CylinderGeometry(radiusOfRemovedCylinder,radiusOfRemovedCylinder,cylRadius*2)
+				var removeCyl =  new THREE.Mesh(removeCylGeometry,revCylinderMaterial)
+				csg.union([revCylinder])
+				for(let i = 0; i<8; i++)
+				{	
+					let theta = (i/8)*2*Math.PI
+					removeCyl.position.set(cylRadius*Math.cos(theta),0,cylRadius*Math.sin(theta))
+					csg.subtract([removeCyl])
+				}
+
+				var revFront = removeCyl.clone()
+				revFront.scale.set(2,2,1.5)
+				revFront.position.set(cylHeight,cylRadius*0.5,0)
+				revFront.rotation.set(0,0,Math.PI/2)
+
+			
+
+				var revCylinder = csg.toMesh();
+				revCylinder.rotation.set(0,0,Math.PI/2)
+				var revolverGroup = new THREE.Group();
+
+
+				const revUpGeometry = new THREE.BoxGeometry(cylHeight*1.5,2.2*cylRadius,cylRadius)
+				let revMaterial = new THREE.LineBasicMaterial({color: "brown"})
+				let revolverUpBody = new THREE.Mesh(revUpGeometry,revMaterial)
+				revolverUpBody.position.set(-cylRadius/10,0,0)
+				
+
+				var revFront = removeCyl.clone()
+				revFront.scale.set(2,2,1.5)
+				revFront.position.set(cylHeight,cylRadius*0.5,0)
+				revFront.rotation.set(0,0,Math.PI/2)
+
+				//const revHandleGeometry = new THREE.BoxGeometry(cylHeight*0.6,3.5*cylRadius,cylRadius*1.8)
+				const revHandleGeometry = new THREE.CylinderGeometry(cylRadius*0.8,cylRadius,3*cylRadius,8)
+				const revHandleMaterial = new THREE.LineBasicMaterial({color:0x5d4d3f})
+				const revHandle = new THREE.Mesh(revHandleGeometry,revHandleMaterial)
+				revHandle.position.set(-cylHeight*0.8,-1*cylRadius, 0)
+
+				revolverGroup.add(revCylinder);
+				revolverGroup.add(revFront)
+				revolverGroup.add(revolverUpBody)
+				revolverGroup.add(revHandle)
+				removeCyl.position.set(0,-cylRadius,0)
+				removeCyl.rotation.set(0,0,Math.PI*0.1)
+				revolverGroup.add(removeCyl)
+
+				//scene.add(revolverGroup)
+
+				return revolverGroup
+				}
+		</script>
+	</body>
+</html>

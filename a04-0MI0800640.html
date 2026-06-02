@@ -1,0 +1,168 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; overflow: hidden; }
+			canvas { width: 100%; height: 100%; }
+		</style>
+		<script type="importmap">	
+			{ "imports": {
+				"three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+				"csg/": "https://cdn.jsdelivr.net/gh/looeee/threejs-csg@main/src/CSG/",
+				"three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+			} }
+		</script>
+	</head>
+	<body>
+		<script type="module">
+		
+			import * as THREE from "three";
+			import {CSG} from "csg/CSG.js"; 
+			import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+			
+			
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setAnimationLoop( drawFrame );
+			document.body.appendChild( renderer.domElement );
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0xebb0ff );
+			
+			var aspect = window.innerWidth/window.innerHeight;
+			var camera = new THREE.PerspectiveCamera( 30, aspect );
+			camera.position.set( 0, -50, 0 );
+
+			const controls = new OrbitControls( camera, renderer.domElement )
+			controls.update()
+
+            //cilindyr osnova, cilindur izpuknala chast edno vurvu drugo, maham edin golqm cilindyr ot sredata nz kak shte pravq zavurtulkite vutre
+            //csg shte naricham onova smeshno izdadeno neshto chep. maham chep ot 4 mesta sus csg, slagam 4 chepa perpendikolqrni na mahnatite
+            
+            let csg = new CSG()
+
+            const baseRadius = 0.8;
+            const baseHeight = 0.1;
+            const baseMaterial = new THREE.MeshPhongMaterial( { color: 0xffff00 } );
+            const baseGeometry = new THREE.CylinderGeometry( baseRadius, baseRadius, baseHeight, 32 );
+            const baseCylinder = new THREE.Mesh( baseGeometry, baseMaterial );
+            
+            const bigTubeRadius = baseRadius/2;
+            const bigTubeHeight = bigTubeRadius*1.5;
+            const tubeGeometry = new THREE.CylinderGeometry(bigTubeRadius,bigTubeRadius, bigTubeHeight, 32);
+            const bigCylininder = new THREE.Mesh(tubeGeometry, baseMaterial);
+            bigCylininder.position.y = bigTubeHeight/2;
+            
+            const cutConeRadBottom = bigTubeRadius*1.2;
+            const cutConeHeight = bigTubeHeight/10;
+            const cutConeGeometry = new THREE.CylinderGeometry( bigTubeRadius,cutConeRadBottom, cutConeHeight, 32);
+            const cutConeMesh = new THREE.Mesh(cutConeGeometry, baseMaterial);
+            cutConeMesh.position.y = baseHeight/2;
+
+             csg.union([baseCylinder,bigCylininder,cutConeMesh]);
+            //mahane na center
+			
+            const deleteCylinder = bigCylininder.clone();
+            deleteCylinder.scale.set(0.85,2,0.85);
+            csg.subtract([deleteCylinder]);
+
+
+			
+			const chepGeometry = new THREE.BoxGeometry(baseRadius*0.66, 0.5, baseRadius*0.33);
+			const chepMesh = new THREE.Mesh(chepGeometry, baseMaterial);
+
+			let csg2 = new CSG();
+			csg2.union([baseCylinder]);
+			chepMesh.position.set(baseRadius*0.3,0,baseRadius*0.95);
+			csg.subtract([chepMesh]);
+			csg2.intersect([chepMesh]);
+
+			
+			
+			
+			chepMesh.position.set(-baseRadius*0.3,0,-baseRadius*0.95);
+			csg.subtract([chepMesh]);
+			
+			chepMesh.rotation.y= -Math.PI/2;
+			chepMesh.position.set(baseRadius*0.95,0, -baseRadius*0.3)
+			csg.subtract([chepMesh])
+			
+			chepMesh.position.set(-baseRadius*0.95,0, +baseRadius*0.3)
+			csg.subtract([chepMesh])
+			
+			let izdadenost = csg2.toMesh();
+			izdadenost.position.set(0,-0.03,0);
+			izdadenost.rotation.set(0,0,Math.PI/2);
+			csg.union([izdadenost]);
+
+			izdadenost.position.set(0,-0.03,0);
+			izdadenost.rotation.set(Math.PI,Math.PI/2,-Math.PI/2);
+			csg.union([izdadenost]);
+
+			izdadenost.position.set(0,-0.03,0);
+			izdadenost.rotation.set(Math.PI, -Math.PI/2,-Math.PI/2);
+			csg.union([izdadenost]);
+
+			izdadenost.position.set(0,-0.03,0);
+			izdadenost.rotation.set(Math.PI,0, -Math.PI/2);
+			csg.union([izdadenost]);
+
+            var nut = csg.toMesh();
+            //scene.add(nut);
+
+			let bigNut = nut.clone();
+			const csgG= new CSG();
+			//shte mahna kub
+			const kubZaMahane = new THREE.Mesh(new THREE.BoxGeometry(baseRadius*1.15,baseRadius*2,baseRadius),baseMaterial);
+			kubZaMahane.position.set(baseRadius*0.6,0,baseRadius*0.55);
+			const cilindurMahane = new THREE.Mesh(new THREE.CylinderGeometry(baseRadius*0.6, baseRadius*0.6, 4));
+
+			csgG.subtract([bigNut,kubZaMahane, cilindurMahane]);
+			const meshG = csgG.toMesh();
+
+			meshG.scale.set(10,10,10);
+			nut.position.set(baseRadius*2,0,baseRadius*2);
+			nut.rotation.set(Math.PI,0,0);
+			nut.scale.set(0.6,0.6,0.6);
+			meshG.rotation.set(Math.PI,0,0)
+			const group = new THREE.Group();
+			scene.add(meshG);
+			scene.add(nut);
+			
+			const wallGeometry = new THREE.CylinderGeometry(baseRadius*11,baseRadius*11,0.3);
+			const wallMesh = new THREE.Mesh(wallGeometry, new THREE.MeshPhongMaterial( { color: 0xbf0000 } ))
+			wallMesh.position.set(0,0.7,0);
+			scene.add(wallMesh);
+            
+			let horizontalL = izdadenost.clone();
+			horizontalL.scale.set(9,3,3);
+			horizontalL.position.set(-1.5,2,0)
+			horizontalL.rotation.set(Math.PI/2,0,0);
+			let verticalL = izdadenost.clone();
+			verticalL.scale.set(5,3,3);
+			verticalL.position.set(0.3,-0.2,0)
+			verticalL.rotation.set(Math.PI,-Math.PI/2, 0);
+			
+			scene.add(horizontalL)
+			scene.add(verticalL)
+			//scene.add(group);
+
+
+
+			var light = new THREE.PointLight( 'white', 150 );
+			light.position.set( 0, 3, 5 );
+			scene.add( light );
+			
+			var light2 = new THREE.PointLight( 'white', 150 );
+			light2.position.set( 0, -3, -5 );
+			scene.add( light2 );
+			
+			function drawFrame( t )
+			{
+				//meshG.rotation.y = t/5000;
+				nut.rotation.y = t/1000;
+				controls.update();
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>
